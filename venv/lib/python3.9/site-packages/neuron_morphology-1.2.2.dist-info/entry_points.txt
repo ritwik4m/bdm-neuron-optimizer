@@ -1,0 +1,8 @@
+[console_scripts]
+apply_affine_transform = neuron_morphology.transforms.affine_transformer.apply_affine_transform:main
+feature_extractor = neuron_morphology.feature_extractor.__main__:main
+layered_point_depths = neuron_morphology.layered_point_depths.__main__:main
+pia_wm_streamlines = neuron_morphology.transforms.pia_wm_streamlines.calculate_pia_wm_streamlines:main
+snap_polygons = neuron_morphology.snap_polygons.__main__:main
+upright_angle = neuron_morphology.transforms.upright_angle.compute_angle:main
+validate_reconstruction = neuron_morphology.validation.validate_reconstruction:main

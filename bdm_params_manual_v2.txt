@@ -1,0 +1,9 @@
+elong_apical 27.821658341835178
+elong_basal 31.563048984207153
+branch_apical 0.033
+branch_basal 0.0125
+steps 110
+length_scale 0.8495145365114443
+taper_rate 0.30
+branch_angle 95.0
+synapse_bias 0.45

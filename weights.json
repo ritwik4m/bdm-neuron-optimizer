@@ -1,0 +1,50 @@
+{
+    "use_profile": "spatially_realistic",
+    "profiles": {
+        "inv_var_normalized": {
+            "total_length_um": 0.000015,
+            "num_segments": 0.000769,
+            "mean_segment_length_um": 0.024949,
+            "std_segment_length_um": 0.077842,
+            "n_bifurcations": 0.000334,
+            "n_tips": 0.000237,
+            "max_tree_depth": 0.014982,
+            "sholl_peak": 0.000449,
+            "sholl_peak_radius_um": 0.000004,
+            "sholl_auc": 0.000002,
+            "max_radial_extent_um": 0.000005,
+            "bif_per_100um": 0.475221,
+            "tips_per_100um": 0.151391
+        },
+        "boost_structure": {
+            "total_length_um": 0.00008,
+            "num_segments": 0.0008,
+            "mean_segment_length_um": 0.02,
+            "std_segment_length_um": 0.05,
+            "n_bifurcations": 0.0002,
+            "n_tips": 0.00015,
+            "max_tree_depth": 0.01,
+            "sholl_peak": 0.0006,
+            "sholl_peak_radius_um": 0.00001,
+            "sholl_auc": 0.000015,
+            "max_radial_extent_um": 0.00003,
+            "bif_per_100um": 0.3,
+            "tips_per_100um": 0.1
+        },
+        "spatially_realistic": {
+            "total_length_um": 0.02,
+            "num_segments": 0.005,
+            "mean_segment_length_um": 0.02,
+            "std_segment_length_um": 0.04,
+            "n_bifurcations": 0.002,
+            "n_tips": 0.002,
+            "max_tree_depth": 0.01,
+            "sholl_peak": 0.002,
+            "sholl_peak_radius_um": 0.001,
+            "sholl_auc": 0.01,
+            "max_radial_extent_um": 0.02,
+            "bif_per_100um": 0.015,
+            "tips_per_100um": 0.015
+        }
+    }
+}

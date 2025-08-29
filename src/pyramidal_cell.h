@@ -1,14 +1,7 @@
 // -----------------------------------------------------------------------------
 //
-// Copyright (C) 2021 CERN & University of Surrey for the benefit of the
-// BioDynaMo collaboration. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-//
-// See the LICENSE file distributed with this work for details.
-// See the NOTICE file distributed with this work for additional information
-// regarding copyright ownership.
+// Simplified pyramidal cell simulation with exposed parameters
+// One neuron grows, exported to SWC for analysis
 //
 // -----------------------------------------------------------------------------
 #ifndef PYRAMIDAL_CELL_H_
@@ -16,70 +9,68 @@
 
 #include <fstream>
 #include <iostream>
+#include <string>
 #include "biodynamo.h"
+#include <ctime> 
 #include "neuroscience/neuroscience.h"
 
 namespace bdm {
 
-enum Substances { kApical, kBasal };
+// ----------------- Parameters + loader -----------------
+struct GrowthParams {
+  double elong_apical  = 80;    // µm per step (apical elongation distance)
+  double elong_basal   = 50;    // µm per step (basal elongation distance)
+  double branch_apical = 0.04;  // probability per step
+  double branch_basal  = 0.006; // probability per step
+  int    steps         = 500;   // number of scheduler steps
+  double length_scale  = 1.0;   // scaling factor for elongation
+};
+static GrowthParams gParams;   // global instance accessible everywhere
 
+inline void LoadParamsFromFile(const std::string& path = "bdm_params.txt") {
+  std::ifstream in(path);
+  if (!in) return; // use defaults if no file
+  std::string key; double val;
+  while (in >> key >> val) {
+    if (key == "elong_apical")  gParams.elong_apical  = val;
+    if (key == "elong_basal")   gParams.elong_basal   = val;
+    if (key == "branch_apical") gParams.branch_apical = val;
+    if (key == "branch_basal")  gParams.branch_basal  = val;
+    if (key == "steps")         gParams.steps         = static_cast<int>(val);
+    if (key == "length_scale")  gParams.length_scale  = val;
+  }
+}
+
+// ----------------- Behaviors -----------------
 struct ApicalDendriteGrowth : public Behavior {
   BDM_BEHAVIOR_HEADER(ApicalDendriteGrowth, Behavior, 1);
   ApicalDendriteGrowth() { AlwaysCopyToNew(); }
   virtual ~ApicalDendriteGrowth() {}
 
-  void Initialize(const NewAgentEvent& event) override {
-    Base::Initialize(event);
-    can_branch_ = false;
-  }
-
   void Run(Agent* agent) override {
     auto* sim = Simulation::GetActive();
     auto* random = sim->GetRandom();
-    auto* rm = sim->GetResourceManager();
-
-    if (!init_) {
-      dg_guide_ = rm->GetDiffusionGrid(kApical);
-      init_ = true;
-    }
 
     auto* dendrite = bdm_static_cast<NeuriteElement*>(agent);
     if (dendrite->GetDiameter() > 0.575) {
-      Real3 gradient;
-      dg_guide_->GetGradient(dendrite->GetPosition(), &gradient);
-
-      real_t gradient_weight = 0.06;
-      real_t randomness_weight = 0.3;
-      real_t old_direction_weight = 4;
-
+      auto old_direction = dendrite->GetSpringAxis() * 4;
       auto random_axis = random->template UniformArray<3>(-1, 1);
-      auto old_direction = dendrite->GetSpringAxis() * old_direction_weight;
-      auto grad_direction = gradient * gradient_weight;
-      auto random_direction = random_axis * randomness_weight;
+      auto new_step_direction = old_direction + random_axis * 0.3;
 
-      Real3 new_step_direction =
-          old_direction + random_direction + grad_direction;
+      dendrite->ElongateTerminalEnd(
+        gParams.elong_apical * gParams.length_scale,
+        new_step_direction);
+      dendrite->SetDiameter(dendrite->GetDiameter() - 0.0007);
 
-      dendrite->ElongateTerminalEnd(100, new_step_direction);
-      dendrite->SetDiameter(dendrite->GetDiameter() - 0.00071);
-
-      if (can_branch_ && dendrite->IsTerminal() &&
-          dendrite->GetDiameter() > 0.55 && random->Uniform() < 0.038) {
+      if (dendrite->IsTerminal() && dendrite->GetDiameter() > 0.55 &&
+          random->Uniform() < gParams.branch_apical) {
         auto rand_noise = random->template UniformArray<3>(-0.1, 0.1);
-        Real3 branch_direction =
-            Math::Perp3(dendrite->GetUnitaryAxisDirectionVector() + rand_noise,
-                        random->Uniform(0, 1)) +
-            dendrite->GetSpringAxis();
+        auto branch_direction = dendrite->GetSpringAxis() + rand_noise;
         auto* dendrite_2 = dendrite->Branch(branch_direction);
         dendrite_2->SetDiameter(0.65);
       }
     }
   }
-
- private:
-  bool init_ = false;
-  bool can_branch_ = true;
-  DiffusionGrid* dg_guide_ = nullptr;
 };
 
 struct BasalDendriteGrowth : public Behavior {
@@ -90,91 +81,68 @@ struct BasalDendriteGrowth : public Behavior {
   void Run(Agent* agent) override {
     auto* sim = Simulation::GetActive();
     auto* random = sim->GetRandom();
-    auto* rm = sim->GetResourceManager();
-
-    if (!init_) {
-      dg_guide_ = rm->GetDiffusionGrid(kBasal);
-      init_ = true;
-    }
 
     auto* dendrite = bdm_static_cast<NeuriteElement*>(agent);
     if (dendrite->IsTerminal() && dendrite->GetDiameter() > 0.75) {
-      Real3 gradient;
-      dg_guide_->GetGradient(dendrite->GetPosition(), &gradient);
-
-      real_t gradient_weight = 0.03;
-      real_t randomness_weight = 0.4;
-      real_t old_direction_weight = 6;
-
+      auto old_direction = dendrite->GetSpringAxis() * 6;
       auto random_axis = random->template UniformArray<3>(-1, 1);
-      auto old_direction = dendrite->GetSpringAxis() * old_direction_weight;
-      auto grad_direction = gradient * gradient_weight;
-      auto random_direction = random_axis * randomness_weight;
+      auto new_step_direction = old_direction + random_axis * 0.4;
 
-      Real3 new_step_direction =
-          old_direction + random_direction + grad_direction;
+      dendrite->ElongateTerminalEnd(
+        gParams.elong_basal * gParams.length_scale,
+        new_step_direction);
+      dendrite->SetDiameter(dendrite->GetDiameter() - 0.0008);
 
-      dendrite->ElongateTerminalEnd(50, new_step_direction);
-      dendrite->SetDiameter(dendrite->GetDiameter() - 0.00085);
-
-      if (random->Uniform() < 0.006) {
+      if (random->Uniform() < gParams.branch_basal) {
         dendrite->Bifurcate();
       }
     }
   }
-
- private:
-  bool init_ = false;
-  DiffusionGrid* dg_guide_ = nullptr;
 };
 
+// ----------------- Create neuron -----------------
 inline void AddInitialNeuron(const Real3& position) {
   auto* soma = new neuroscience::NeuronSoma(position);
   soma->SetDiameter(10);
   Simulation::GetActive()->GetResourceManager()->AddAgent(soma);
 
-  auto* apical_dendrite = soma->ExtendNewNeurite({0, 0, 1});
-  auto* basal_dendrite1 = soma->ExtendNewNeurite({0, 0, -1});
-  auto* basal_dendrite2 = soma->ExtendNewNeurite({0, 0.6, -0.8});
-  auto* basal_dendrite3 = soma->ExtendNewNeurite({0.3, -0.6, -0.8});
+  auto* apical = soma->ExtendNewNeurite({0, 0, 1});
+  auto* basal1 = soma->ExtendNewNeurite({0, 0, -1});
+  auto* basal2 = soma->ExtendNewNeurite({0, 0.6, -0.8});
+  auto* basal3 = soma->ExtendNewNeurite({0.3, -0.6, -0.8});
 
-  apical_dendrite->AddBehavior(new ApicalDendriteGrowth());
-  basal_dendrite1->AddBehavior(new BasalDendriteGrowth());
-  basal_dendrite2->AddBehavior(new BasalDendriteGrowth());
-  basal_dendrite3->AddBehavior(new BasalDendriteGrowth());
+  apical->AddBehavior(new ApicalDendriteGrowth());
+  basal1->AddBehavior(new BasalDendriteGrowth());
+  basal2->AddBehavior(new BasalDendriteGrowth());
+  basal3->AddBehavior(new BasalDendriteGrowth());
 }
 
-/// Create and initialize substances for neurite attraction
-inline void CreateExtracellularSubstances(const Param* p) {
-  using MI = ModelInitializer;
-  MI::DefineSubstance(kApical, "substance_apical", 0, 0, p->max_bound / 80);
-  MI::DefineSubstance(kBasal, "substance_basal", 0, 0, p->max_bound / 80);
-  // initialize substance with gaussian distribution
-  auto a_initializer = GaussianBand(p->max_bound, 200, Axis::kZAxis);
-  auto b_initializer = GaussianBand(p->min_bound, 200, Axis::kZAxis);
-  MI::InitializeSubstance(kApical, a_initializer);
-  MI::InitializeSubstance(kBasal, b_initializer);
-}
-
-/// Saves the morphology of the neuron in the SWC file format.
+// ----------------- Save morphology -----------------
 inline void SaveNeuronMorphology(Simulation& sim) {
   auto* rm = sim.GetResourceManager();
   rm->ForEachAgent([&](Agent* agent) {
     auto* soma = dynamic_cast<neuroscience::NeuronSoma*>(agent);
     if (soma != nullptr) {
-      std::ofstream myfile;
-      myfile.open(sim.GetOutputDir() + "/neuron.swc");
+      const char* trial_env = std::getenv("TRIAL_ID");
+      std::string trial_id = trial_env ? trial_env : "unknown";
+      std::string filename = "output/neuron_" + trial_id + ".swc";
+
+      std::ofstream myfile(filename);
       soma->PrintSWC(myfile);
     }
   });
 }
 
+// ----------------- Simulation entry -----------------
 inline int Simulate(int argc, const char** argv) {
   neuroscience::InitModule();
   Simulation simulation(argc, argv);
-  AddInitialNeuron({150, 150, 0});
-  CreateExtracellularSubstances(simulation.GetParam());
-  simulation.GetScheduler()->Simulate(500);
+
+  LoadParamsFromFile();
+
+  AddInitialNeuron({0, 0, 0});
+  simulation.GetScheduler()->Simulate(gParams.steps);
+
   SaveNeuronMorphology(simulation);
   std::cout << "Simulation completed successfully!" << std::endl;
   return 0;

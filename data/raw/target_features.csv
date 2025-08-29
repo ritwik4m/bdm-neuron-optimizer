@@ -1,0 +1,11 @@
+total_length_um,num_segments,mean_segment_length_um,std_segment_length_um,n_bifurcations,n_tips,max_tree_depth,sholl_peak,sholl_peak_radius_um,sholl_auc,max_radial_extent_um,bif_per_100um,tips_per_100um,file,path
+,,,,,,,,,,,,,RI0078_Mid1_SRFinal_annot.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0078_Mid1_SRFinal_annot.CNG.swc
+,,,,,,,,,,,,,RI0090_Mid1_SRFinal_annot.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0090_Mid1_SRFinal_annot.CNG.swc
+,,,,,,,,,,,,,RI0090_Mid2_SRFinal_annot.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0090_Mid2_SRFinal_annot.CNG.swc
+,,,,,,,,,,,,,RI0090_Post2_SRFinal_anno.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0090_Post2_SRFinal_anno.CNG.swc
+,,,,,,,,,,,,,RI0096_rep1_SRFinal_annot.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0096_rep1_SRFinal_annot.CNG.swc
+,,,,,,,,,,,,,RI0100_Mid1_Final_annotat.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0100_Mid1_Final_annotat.CNG.swc
+,,,,,,,,,,,,,RI0159_rep7_SRFinal_annot.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0159_rep7_SRFinal_annot.CNG.swc
+,,,,,,,,,,,,,RI0175_Mid3_Final_annotat.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0175_Mid3_Final_annotat.CNG.swc
+,,,,,,,,,,,,,RI0206_Mid3_Final_annotat.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0206_Mid3_Final_annotat.CNG.swc
+,,,,,,,,,,,,,RI0408_Fix6_SRFinal_annot.CNG.swc,/workspace/pyramidal_cell/data/raw/RI0408_Fix6_SRFinal_annot.CNG.swc
